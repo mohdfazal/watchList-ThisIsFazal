@@ -1,8 +1,6 @@
 package com.example.watchList_ThisIsFazal;
 
 import org.springframework.stereotype.Repository;
-
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,96 +8,117 @@ import java.util.Map;
 
 @Repository
 public class MovieRepository {
+
+    // HashMap to store movies, with movie name as the key
     HashMap<String, Movie> movieDb = new HashMap<>();
+
+    // HashMap to store directors, with director name as the key
     HashMap<String , Director> directorDb = new HashMap<>();
+
+    // HashMap to store movie-director pairs, with movie name as the key and director name as the value
     HashMap<String , String> movieDirectorPairDb = new HashMap<>();
 
-    public String addMovie(Movie movie){
+
+//     * Adds a movie to the database.
+//     * @param movie Movie object containing name, duration, and IMDb rating.
+//     * @return Success message.
+
+    public String addMovie(Movie movie) {
         String key = movie.getName();
-        movieDb.put(key, movie);
-        return "Movie added successfully ";
+        movieDb.put(key, movie); // Store the movie object in the HashMap
+        return "Movie added successfully";
     }
+
+
+//     * Adds a director to the database.
+//     * @param director Director object containing name, number of movies, and IMDb rating.
+//     * @return Success message.
 
     public String addDirector(Director director) {
         String key = director.getName();
-        directorDb.put(key, director);
+        directorDb.put(key, director); // Store the director object in the HashMap
         return "Director added successfully";
     }
 
-    public String addMovieDirectorPair(String movieName, String directorName){
-        movieDirectorPairDb.put(movieName, directorName);
-        return "Movie name and Director name has been paired successfully";
 
+//     * Pairs an existing movie with an existing director.
+//     * @param movieName Name of the movie.
+//     * @param directorName Name of the director.
+//     * @return Success message.
+
+    public String addMovieDirectorPair(String movieName, String directorName) {
+        movieDirectorPairDb.put(movieName, directorName); // Map movie to director
+        return "Movie and Director have been paired successfully";
     }
 
+
+//     * Retrieves a list of movies directed by a given director.
+//     * @param directorName Name of the director.
+//     * @return List of Movie objects directed by the given director.
+
     public List<Movie> getMoviesByDirectorName(String directorName) {
-        // Step 1: Create an empty list to store movies directed by the given director
-        List<Movie> movieList = new ArrayList<>();
+        List<Movie> movieList = new ArrayList<>(); // Create an empty list to store the movies
 
-        // Step 2: Iterate over the movie-director mapping database
+        // Iterate through movie-director mapping to find movies by the director
         for (Map.Entry<String, String> entry : movieDirectorPairDb.entrySet()) {
-            // Step 3: Check if the current movie is associated with the given director
-            if (entry.getValue().equals(directorName)) {
-                String movieName = entry.getKey(); // Get the movie name from the map
+            if (entry.getValue().equals(directorName)) { // Check if the movie is directed by the given director
+                String movieName = entry.getKey(); // Get the movie name
+                Movie movie = movieDb.get(movieName); // Fetch movie details from movieDb
+                movieList.add(movie); // Add to the result list
+            }
+        }
+        return movieList; // Return the list of movies
+    }
 
-                // Step 4: Retrieve the movie object from the movie database using the movie name
-                Movie movie = movieDb.get(movieName);
 
-                // Step 5: Add the movie to the result list
-                movieList.add(movie);
+//     * Deletes a director and all movies associated with them.
+//     * @param directorName Name of the director to delete.
+//     * @return Success message.
+
+    public String deleteDirectorAndItsMovieByDirectorName(String directorName) {
+        directorDb.remove(directorName); // Remove the director from directorDb
+
+        // Iterate through movie-director pairs to find movies associated with the director
+        List<String> moviesToRemove = new ArrayList<>();
+        for (Map.Entry<String, String> entry : movieDirectorPairDb.entrySet()) {
+            if (entry.getValue().equals(directorName)) { // If the movie belongs to the director
+                moviesToRemove.add(entry.getKey()); // Store the movie name for later removal
             }
         }
 
-        // Step 6: Return the list of movies directed by the given director
-        return movieList;
+        // Remove movies and their mapping from both databases
+        for (String movieName : moviesToRemove) {
+            movieDb.remove(movieName); // Remove the movie from movieDb
+            movieDirectorPairDb.remove(movieName); // Remove the mapping from movieDirectorPairDb
+        }
+
+        return "Director and all their movies have been deleted successfully";
     }
 
 
-    public String deleteDirectorAndItsMovieByDirectorName(String directorName) {
-        // Step 1: Remove the director from the director database
-        directorDb.remove(directorName);
+//     * Deletes all directors and their associated movies.
+//     * Movies without any director association are not deleted.
+//     * @return Success message.
 
-        // Step 2: Iterate over the movie-director mapping to find movies associated with the director
-        for (Map.Entry<String, String> entry : movieDirectorPairDb.entrySet()) {
-            // Check if the current movie is associated with the given director
-            if (entry.getValue().equals(directorName)) {
-                String movieName = entry.getKey(); // Get the movie name
+    public String deleteEverything() {
+        for (String directorName : new ArrayList<>(directorDb.keySet())) {
+            // Remove the director from directorDb
+            directorDb.remove(directorName);
 
-                // Step 3: Remove the movie from the movie database
+            // Find and remove all movies directed by the current director
+            List<String> moviesToRemove = new ArrayList<>();
+            for (Map.Entry<String, String> entry : movieDirectorPairDb.entrySet()) {
+                if (entry.getValue().equals(directorName)) {
+                    moviesToRemove.add(entry.getKey());
+                }
+            }
+
+            // Remove all movies directed by this director
+            for (String movieName : moviesToRemove) {
                 movieDb.remove(movieName);
-
-                // Step 4: Remove the movie-director pair from the mapping database
                 movieDirectorPairDb.remove(movieName);
             }
         }
-
-        // Step 5: Return a success message
-        return "Director and its movies have been deleted successfully";
+        return "All directors and their movies have been deleted successfully";
     }
-
-
-    public String deleteEverything(){
-        for(String directorName : directorDb.keySet()){
-            // Step 1: Remove the director from the director database
-            directorDb.remove(directorName);
-
-            // Step 2: Iterate over the movie-director mapping to find movies associated with the director
-            for (Map.Entry<String, String> entry : movieDirectorPairDb.entrySet()) {
-                // Check if the current movie is associated with the given director
-                if (entry.getValue().equals(directorName)) {
-                    String movieName = entry.getKey(); // Get the movie name
-
-                    // Step 3: Remove the movie from the movie database
-                    movieDb.remove(movieName);
-
-                    // Step 4: Remove the movie-director pair from the mapping database
-                    movieDirectorPairDb.remove(movieName);
-                }
-            }
-        }
-        // Step 5: Return a success message
-        return "Director and its movies have been deleted successfully";
-    }
-
-
 }
